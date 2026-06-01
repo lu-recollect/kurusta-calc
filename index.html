@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>クルスタ 星騎士ピース計算機 - ティンクルスターナイツ攻略ツール</title>
+    <meta name="description" content="ティンクルスターナイツ（クルスタ）の星騎士の目標ランクまでの必要スターピースを計算する非公式ツールです。">
+    
+    <meta property="og:title" content="クルスタ 星騎士ピース計算機 | ティンクルスターナイツ非公式ツール">
+    <meta property="og:description" content="クルスタの星上げに必要なスターピースを簡単に計算！">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://curious-entremet-b1c241.netlify.app/">
+　  <meta property="og:image" content="https://curious-entremet-b1c241.netlify.app/thumbnail.png">
+    <style>
+        body {
+            background: linear-gradient(180deg, #0e1d40 0%, #1a3370 100%);
+            margin: 0;
+            padding: 20px 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Meiryo, sans-serif;
+            overflow-y: scroll;
+        }
+        .container {
+            background: #eef4fb;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #c8d9ed;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-sizing: border-box;
+        }
+        h1 { font-size: 20px; color: #1a2e5a; margin-bottom: 20px; }
+        p { font-size: 14px; font-weight: bold; color: #3f5d8a; margin: 10px 0 5px; text-align: left; }
+        select, input { padding: 12px; font-size: 16px; width: 100%; border-radius: 4px; border: 1px solid #a8c1e8; box-sizing: border-box; }
+        button { width: 100%; padding: 18px; font-size: 18px; font-weight: bold; margin-top: 25px; cursor: pointer; border-radius: 6px; background: linear-gradient(180deg, #faf7ac 0%, #f7ef7b 100%); color: #7a6e3d; border: 1px solid #c8bc64; box-shadow: 0 4px 0 #b3a54b; }
+        #result { margin-top: 20px; padding: 15px; background: #e0e9f5; border: 1px solid #c8d9ed; border-radius: 4px; color: #1a2e5a; font-size: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>クルスタ非公式ツール<br>星騎士ピース計算機</h1>
+    
+    <p>現在のランク: 
+        <select id="currentRank">
+            <option value="0">未所持</option>
+            <option value="0">星1</option>
+            <option value="50">星2</option>
+            <option value="150" selected>星3</option>
+            <option value="350">星4</option>
+            <option value="650">星5</option>
+            <option value="700">コアLv1</option>
+            <option value="820">コアLv2</option>
+        </select>
+    </p>
+    
+    <p>目標ランク: 
+        <select id="targetRank">
+            <option value="50">星2</option>
+            <option value="150">星3</option>
+            <option value="350" selected>星4</option>
+            <option value="650">星5</option>
+            <option value="700">コアLv1</option>
+            <option value="820">コアLv2</option>
+            <option value="1000">コアLv3</option>
+        </select>
+    </p>
+    
+    <p>手持ち星騎士ピース数: <input type="number" id="ownedNum" placeholder="所持数"></p>
+    <p>現在のレート: 
+        <select id="currentRate">
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5">5</option>
+        </select>
+    </p>
+    <p>現レートの残り交換可能数: 
+        <select id="remainingInRate">
+            <script>
+                for(let i=25; i>=1; i--) document.write('<option value="'+i+'">'+i+'</option>');
+            </script>
+        </select>
+    </p>
+    
+    <button id="calcBtn">計算する</button>
+    <h2 id="result">必要スタピ: -</h2>
+</div>
+
+<script>
+    const currentRank = document.getElementById('currentRank');
+    const targetRank = document.getElementById('targetRank');
+    // 目標ランクの全選択肢を保持
+    const allTargetOptions = Array.from(targetRank.options);
+
+    function updateTargetOptions() {
+        const currentVal = parseInt(currentRank.value);
+        const isNotOwned = (currentRank.options[currentRank.selectedIndex].text === "未所持");
+
+        // 未所持の場合は星3固定
+        if (isNotOwned) {
+            targetRank.innerHTML = '';
+            const opt = document.createElement('option');
+            opt.value = "150";
+            opt.text = "星3";
+            targetRank.add(opt);
+            targetRank.disabled = true;
+            return;
+        }
+
+        // 通常時：現在ランクより高いランクのみを残す
+        targetRank.disabled = false;
+        targetRank.innerHTML = '';
+        allTargetOptions.forEach(opt => {
+            if (parseInt(opt.value) > currentVal) {
+                targetRank.add(opt.cloneNode(true));
+            }
+        });
+    }
+
+    // イベントリスナー設定
+    currentRank.addEventListener('change', updateTargetOptions);
+
+    // 初期化実行
+    updateTargetOptions();
+
+    document.getElementById('calcBtn').addEventListener('click', function() {
+        const currentTotal = parseInt(currentRank.value);
+        const targetTotal = parseInt(targetRank.value);
+        const owned = parseInt(document.getElementById('ownedNum').value) || 0;
+        const rate = parseInt(document.getElementById('currentRate').value);
+        const remaining = parseInt(document.getElementById('remainingInRate').value);
+
+        const needToExchange = Math.max(targetTotal - currentTotal - owned, 0);
+        const exchanged = ((rate - 1) * 25) + (25 - remaining);
+        
+        let total = 0;
+        for (let i = exchanged + 1; i <= exchanged + needToExchange; i++) {
+            total += Math.min(Math.floor((i - 1) / 25) + 1, 5);
+        }
+        
+        document.getElementById('result').innerText = "必要スタピ: " + total + "個";
+    });
+</script>
+</body>
+</html>
