@@ -40,11 +40,91 @@
         select, input { padding: 12px; font-size: 16px; width: 100%; border-radius: 4px; border: 1px solid #a8c1e8; box-sizing: border-box; }
         button { width: 100%; padding: 18px; font-size: 18px; font-weight: bold; margin-top: 25px; cursor: pointer; border-radius: 6px; background: linear-gradient(180deg, #faf7ac 0%, #f7ef7b 100%); color: #7a6e3d; border: 1px solid #c8bc64; box-shadow: 0 4px 0 #b3a54b; }
         #result { margin-top: 20px; padding: 15px; background: #e0e9f5; border: 1px solid #c8d9ed; border-radius: 4px; color: #1a2e5a; font-size: 20px; font-weight: bold; }
+
+        /* --- ここから追加：モーダル用のスタイル --- */
+        .container {
+            position: relative; /* 右上ボタンの配置基準点として機能させるため追記 */
+        }
+        /* 使い方ボタン（コンテナの右上・丸型アイコンスタイル） */
+        .help-trigger-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px !important;
+            height: 30px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: 14px !important;
+            background: #c8d9ed !important;
+            color: #1a2e5a !important;
+            border: 1px solid #a8c1e8 !important;
+            box-shadow: none !important;
+            border-radius: 50% !important;
+            cursor: pointer !important;
+            display: flex !important;
+            justify-content: center;
+            align-items: center;
+        }
+        /* 背景の黒透過レイヤー */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        /* ポップアップの白い箱 */
+        .modal-content {
+            background: #fff;
+            padding: 25px 20px 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 420px;
+            box-sizing: border-box;
+            position: relative;
+            text-align: left;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        /* モーダル内の文字装飾 */
+        .modal-content h3 { color: #1a2e5a; margin-top: 0; margin-bottom: 15px; font-size: 18px; }
+        .modal-intro { color: #3f5d8a; font-size: 13px; font-weight: bold; margin-bottom: 15px; text-align: left; }
+        .modal-content ul { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.6; }
+        .modal-content li { margin-bottom: 10px; color: #333; }
+        .modal-content strong { color: #1a2e5a; }
+        /* 閉じるボタン(×) */
+        .modal-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: auto;
+            box-shadow: none;
+        }
+        .modal-close-btn:hover { color: #333; }
+        /* 非表示クラス */
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <button id="openModalBtn" type="button" class="help-trigger-btn">❓</button>
+
     <h1>クルスタ非公式ツール<br>星騎士ピース計算機</h1>
     
     <p>現在のランク: 
@@ -89,6 +169,20 @@
     
     <button id="calcBtn">計算する</button>
     <h2 id="result">必要スタピ: -</h2>
+</div>
+
+<div id="helpModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <button id="closeModalBtn" class="modal-close-btn">×</button>
+        <h3>使い方・各項目の見方</h3>
+        <p class="modal-intro">「ショップ ＞ 交換所 ＞ 星騎士ピース交換所」画面を見ながら入力してください。</p>
+        <ul>
+            <li><strong>現在のランク / 目標ランク:</strong><br>星上げさせたい星騎士の現在の状態と、目標の状態を選択します。<br>尚、現在のランクで未所持を選択することもできます。選択した場合、目標ランクは星３固定になります。</li>
+            <li><strong>手持ち星騎士ピース数:</strong> すでに所持している「該当星騎士のピース」の数です（なければ0でOK）。</li>
+            <li><strong>現在のレート:</strong> ピース1個の交換に必要なスタピの数（1〜5）です。</li>
+            <li><strong>現レートの残り交換可能数:</strong> そのレートであと何回交換できるか（最大25）の残り回数です。画面に「あと15回」とあれば「15」を選んでください。</li>
+        </ul>
+    </div>
 </div>
 
 <script>
@@ -144,6 +238,28 @@
         }
         
         document.getElementById('result').innerText = "必要スタピ: " + total + "個";
+    });
+
+    // --- ここから追加：モーダルの開閉制御 ---
+    const helpModal = document.getElementById('helpModal');
+    const openModalBtn = document.getElementById('openModalBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    // モーダルを開く
+    openModalBtn.addEventListener('click', () => {
+        helpModal.classList.remove('hidden');
+    });
+
+    // 閉じるボタンで閉じる
+    closeModalBtn.addEventListener('click', () => {
+        helpModal.classList.add('hidden');
+    });
+
+    // 背景（黒い部分）をクリックしても閉じるようにする
+    helpModal.addEventListener('click', (e) => {
+        if (e.target === helpModal) {
+            helpModal.classList.add('hidden');
+        }
     });
 </script>
 </body>
